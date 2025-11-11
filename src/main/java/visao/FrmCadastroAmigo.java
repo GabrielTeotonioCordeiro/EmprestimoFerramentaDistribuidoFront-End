@@ -1,25 +1,24 @@
 package visao;
 
+import java.rmi.RemoteException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
-import modelo.Amigo;
-import service.AmigoService;
+import static servico.AmigoService.getInstanciaAmigo;
+import servico.IAmigo;
 
 public class FrmCadastroAmigo extends javax.swing.JFrame {
 
     /**
      * Creates new form FrmCadastroAmigo
      */
-    private final transient Amigo objetoamigo;
-    // cria o vínculo com Amigo.java
-    private final transient AmigoService serviceAmigo;
+    private final transient IAmigo objetoamigo;
 
     private String mensagem;
 
-    public FrmCadastroAmigo() {
+    public FrmCadastroAmigo() throws Exception {
         initComponents();
-        this.objetoamigo = new Amigo();
-        // carrega o objeto vazio de amigo
-        this.serviceAmigo = new AmigoService();
+        this.objetoamigo = getInstanciaAmigo();
 
     }
 
@@ -145,13 +144,15 @@ public class FrmCadastroAmigo extends javax.swing.JFrame {
             objetoamigo.setNomeAmigo(nome);
             objetoamigo.setTelefone(telefone);
 
-            if (serviceAmigo.insertAmigoDB(nome, telefone)) {
+            if (objetoamigo.insertAmigoDB(nome, telefone)) {
                 mostrarMensagem("Amigo cadastrado com sucesso.");
                 textNomeAmigo.setText("");
                 textTelefone.setText("");
             }
         } catch (Erro erro) {
             JOptionPane.showMessageDialog(null, erro.getMessage());
+        } catch (RemoteException ex) {
+            Logger.getLogger(FrmCadastroAmigo.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_cadastrarButtonActionPerformed
 
@@ -181,7 +182,13 @@ public class FrmCadastroAmigo extends javax.swing.JFrame {
         /* Create and display the form */
         /* Create and display the form */
         
-        java.awt.EventQueue.invokeLater(() -> new FrmCadastroAmigo().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> {
+            try {
+                new FrmCadastroAmigo().setVisible(true);
+            } catch (Exception ex) {
+                Logger.getLogger(FrmCadastroAmigo.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
 
     }
 
