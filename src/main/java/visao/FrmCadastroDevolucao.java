@@ -1,27 +1,37 @@
 package visao;
 
+import java.rmi.RemoteException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
-import modelo.Amigo;
-import modelo.Emprestimo;
-import modelo.Ferramenta;
-import service.FerramentaService;
-import service.AmigoService;
-import service.EmprestimoService;
+import servico.IEmprestimo;
+import servico.IAmigo;
+import servico.IFerramenta;
+import servico.AmigoService;
+import servico.FerramentaService;
+import servico.EmprestimoService;
 
 public class FrmCadastroDevolucao extends javax.swing.JFrame {
 
-    private transient EmprestimoService emprestimoService;
-    private transient AmigoService amigoService = new AmigoService();
-    private transient FerramentaService ferramentaService = new FerramentaService();
+    private transient IEmprestimo emprestimoService;
+    private transient IAmigo amigoService;
+    private transient IFerramenta ferramentaService;
+
     private String mensagem;
 
     public FrmCadastroDevolucao() {
         initComponents();
-        emprestimoService = new EmprestimoService();  
-        this.carregaCBEmprestimo();
+        try {
+            this.emprestimoService = EmprestimoService.getInstanciaEmprestimo();
+            this.amigoService = AmigoService.getInstanciaAmigo();
+            this.ferramentaService = FerramentaService.getInstanciaFerramenta();
+            this.carregaCBEmprestimo();
+        } catch (Exception e) {
+            mostrarMensagem("Erro ao conectar com o servidor: " + e.getMessage());
+        }
     }
 
     public String getMensagem() {
@@ -103,36 +113,71 @@ public class FrmCadastroDevolucao extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void buttonCancelarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonCancelarActionPerformed
-        if (evt == null) return;
+        if (evt == null) {
+            return;
+        }
         this.dispose();
     }//GEN-LAST:event_buttonCancelarActionPerformed
 
     private void buttonCadatrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonCadatrarActionPerformed
+                                             
         if (evt == null) return;
+        try {
         int posicaoEmprestimo = comboBoxEmprestimo.getSelectedIndex();
-        List<Emprestimo> listaEmprestimo = emprestimoService.getListaEmprestimoAtivo();
-        EmprestimoService emp = new EmprestimoService();
-        String data = LocalDate.now() + "";
-        String[] dataInvertida = data.split("-");
-        data = dataInvertida[2] + "-" + dataInvertida[1] + "-" + dataInvertida[0];
+            List<String[]> listaEmprestimo = emprestimoService.getListaEmprestimoAtivo();
+            String[] emp = listaEmprestimo.get(posicaoEmprestimo);
+            String data = LocalDate.now().toString();
+            String[] dataInvertida = data.split("-");
+            data = dataInvertida[2] + "-" + dataInvertida[1] + "-" + dataInvertida[0];
 
-        if (emp.updateEmprestimoDB(listaEmprestimo.get(posicaoEmprestimo).getIDEmprestimo(), listaEmprestimo.get(posicaoEmprestimo).getIDAmigo(), listaEmprestimo.get(posicaoEmprestimo).getIDFerramenta(), listaEmprestimo.get(posicaoEmprestimo).getDataEmprestimo(), data)) {
-            mostrarMensagem("Devolucao cadastrada com sucesso.");
-            comboBoxEmprestimo.removeAllItems();
-            this.carregaCBEmprestimo();
+        if (emprestimoService.updateEmprestimoDB(
+                    Integer.parseInt(emp[0]),
+                    Integer.parseInt(emp[1]), 
+                    Integer.parseInt(emp[2]), 
+                    emp[3],                   
+                    data                     
+            )) {
+                mostrarMensagem("Devolução cadastrada com sucesso.");
+                comboBoxEmprestimo.removeAllItems();
+                this.carregaCBEmprestimo();
+            }
+        } catch (Exception e) {
+            mostrarMensagem("Erro ao cadastrar devolução: " + e.getMessage());
         }
+
     }//GEN-LAST:event_buttonCadatrarActionPerformed
 
     public void carregaCBEmprestimo() {
-        EmprestimoService emp = new EmprestimoService();
-        List<Emprestimo> listaEmprestimo = emp.getListaEmprestimoAtivo();
-        List<Amigo> listaAmigo = amigoService.listaAmigo();
-        List<Ferramenta> listaFerramenta = ferramentaService.listaFerramenta();
+    try {
+        List<String[]> listaEmprestimo = emprestimoService.getListaEmprestimoAtivo();
+        List<String[]> listaAmigo = amigoService.listarTodos();
+        List<String[]> listaFerramenta = ferramentaService.listarTodas();
 
-        for (Emprestimo objeto : listaEmprestimo) {
-            comboBoxEmprestimo.addItem(objeto.getIDEmprestimo() + "- " + listaAmigo.get(objeto.getIDAmigo() - 1).getNomeAmigo() + "- " + listaFerramenta.get(objeto.getIDFerramenta() - 1).getNomeFerramenta());
+        for (String[] emp : listaEmprestimo) {
+            int idEmprestimo = Integer.parseInt(emp[0]);
+            int idAmigo = Integer.parseInt(emp[1]);
+            int idFerramenta = Integer.parseInt(emp[2]);
+
+            // Busca o nome do amigo correspondente ao ID
+            String nomeAmigo = listaAmigo.stream()
+                .filter(a -> Integer.parseInt(a[0]) == idAmigo)
+                .map(a -> a[1])
+                .findFirst()
+                .orElse("Amigo desconhecido");
+
+            // Busca o nome da ferramenta correspondente ao ID
+            String nomeFerramenta = listaFerramenta.stream()
+                .filter(f -> Integer.parseInt(f[0]) == idFerramenta)
+                .map(f -> f[1])
+                .findFirst()
+                .orElse("Ferramenta desconhecida");
+
+            comboBoxEmprestimo.addItem(idEmprestimo + " - " + nomeAmigo + " - " + nomeFerramenta);
         }
+    } catch (Exception e) {
+        mostrarMensagem("Erro ao carregar empréstimos: " + e.getMessage());
     }
+}
 
     public static void main(String[] args) {
         /* Set the Nimbus look and feel */
@@ -151,7 +196,7 @@ public class FrmCadastroDevolucao extends javax.swing.JFrame {
             java.util.logging.Logger.getLogger(FrmCadastroDevolucao.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
-        
+
         //</editor-fold>
 
         /* Create and display the form */
