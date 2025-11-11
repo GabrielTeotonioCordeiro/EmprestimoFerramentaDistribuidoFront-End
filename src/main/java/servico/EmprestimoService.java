@@ -7,10 +7,10 @@ public class EmprestimoService {
    
    public static IEmprestimo getInstanciaEmprestimo() throws Exception{
     if(instanciaEmprestimo == null){
-        Registry registroEmprestimo = LocateRegistry.getRegistry(1099);
+        Registry registroEmprestimo = LocateRegistry.getRegistry("localhost", 1099);
         Object obj = registroEmprestimo.lookup("EmprestimoService");
         instanciaEmprestimo = (IEmprestimo) obj;
     }
     return instanciaEmprestimo;
-}
+   }
 }
