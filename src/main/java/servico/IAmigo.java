@@ -18,7 +18,7 @@ public interface IAmigo extends Remote {
 
     public void setIdAmigo(int idAmigo) throws RemoteException;
 
-    public List<Amigo> listarTodos() throws RemoteException;
+    public List<String[]> listarTodos() throws RemoteException;
 
     public boolean insertAmigoDB(String nome, String telefone) throws RemoteException;
 
@@ -26,11 +26,9 @@ public interface IAmigo extends Remote {
 
     public boolean updateAmigoDB(int id, String nome, String telefone) throws RemoteException;
 
-    public Amigo retrieveAmigoDB(int id) throws RemoteException;
+    public IAmigo retrieveAmigoDB(int id) throws RemoteException;
 
     public int maiorID() throws RemoteException;
-
-    public List<Emprestimo> buscarEmprestimosDoAmigo(int id, boolean apenasAtivos) throws RemoteException;
 
     public boolean possuiEmprestimoAtivo(int id) throws RemoteException;
 
