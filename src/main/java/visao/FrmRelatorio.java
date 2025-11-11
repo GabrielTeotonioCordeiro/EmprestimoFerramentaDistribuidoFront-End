@@ -1,23 +1,24 @@
 package visao;
 
 import java.util.List;
-import modelo.Amigo;
-import modelo.Emprestimo;
-import modelo.Ferramenta;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import service.AmigoService;
-import service.EmprestimoService;
-import service.FerramentaService;
+import static servico.AmigoService.getInstanciaAmigo;
+import static servico.EmprestimoService.getInstanciaEmprestimo;
+import static servico.FerramentaService.getInstanciaFerramenta;
+import servico.IAmigo;
+import servico.IEmprestimo;
+import servico.IFerramenta;
 
 public class FrmRelatorio extends javax.swing.JFrame {
 
-    public FrmRelatorio() {
+    public FrmRelatorio() throws Exception {
         initComponents();
         this.criaRelatorio();
+        ferramentaService = getInstanciaFerramenta();
     }
     private static final Logger logger = Logger.getLogger(FrmRelatorio.class.getName());
-    private transient FerramentaService ferramentaService = new FerramentaService();
+    private transient IFerramenta ferramentaService;
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -72,60 +73,58 @@ public class FrmRelatorio extends javax.swing.JFrame {
         }
         this.dispose();
     }//GEN-LAST:event_jButton1ActionPerformed
-    public void criaRelatorio() {
+    public void criaRelatorio() throws Exception {
         int idAmigo = 0;
         int maior = 0;
         StringBuilder sb = new StringBuilder();
         double som = 0;
-        AmigoService amigoService = new AmigoService();
-        EmprestimoService emp = new EmprestimoService();
-        List<Amigo> listaAmigo = amigoService.listaAmigo();
-        List<Ferramenta> listaFerramenta = ferramentaService.listaFerramenta();
-        List<Emprestimo> listaEmprestimo = emp.listaEmprestimo();
+        IAmigo amigoService = getInstanciaAmigo();
+        IEmprestimo emp = getInstanciaEmprestimo();
+        List<String[]> listaAmigo = amigoService.listarTodos();
+        List<String[]> listaFerramenta = ferramentaService.listarTodas();
+        List<String[]> listaEmprestimo = emp.listaEmprestimo();
 
-        for (Ferramenta f : listaFerramenta) {
-            sb.append("\n ID da Ferramenta: ").append(f.getIdFerramenta())
-                    .append("\n Nome da Ferramenta: ").append(f.getNomeFerramenta())
-                    .append("\n Marca da Ferramenta: ").append(f.getMarcaFerramenta())
-                    .append("\n Custo da Ferramenta: ").append(f.getCustoFerramenta())
+        for (String[] f : listaFerramenta) {
+            sb.append("\n ID da Ferramenta: ").append(f[0])
+                    .append("\n Nome da Ferramenta: ").append(f[1])
+                    .append("\n Marca da Ferramenta: ").append(f[2])
+                    .append("\n Custo da Ferramenta: ").append(f[3])
                     .append("\n");
-            som += f.getCustoFerramenta();
+            som += Double.parseDouble(f[3]);
         }
 
         sb.append("\n Custo total das ferramentas: R$").append(som).append("\n\n AMIGOS: \n");
 
-        for (Amigo a : listaAmigo) {
-            int qtdEmprestimos = amigoService.quantidadeEmprestimo(a.getIdAmigo());
-            boolean possuiAtivo = amigoService.possuiEmprestimoAtivo(a.getIdAmigo());
+        for (String[] a : listaAmigo) {
+            int qtdEmprestimos = amigoService.quantidadeDeEmprestimos(Integer.parseInt(a[0]));
+            boolean possuiAtivo = amigoService.possuiEmprestimoAtivo(Integer.parseInt(a[0]));
 
-            sb.append("\n ID do Amigo: ").append(a.getIdAmigo())
-                    .append("\n Nome do Amigo: ").append(a.getNomeAmigo())
-                    .append("\n Telefone do Amigo: ").append(a.getTelefone())
+            sb.append("\n ID do Amigo: ").append(a[0])
+                    .append("\n Nome do Amigo: ").append(a[1])
+                    .append("\n Telefone do Amigo: ").append(a[2])
                     .append("\n Número de Empréstimos: ").append(qtdEmprestimos)
                     .append("\n Possui empréstimo ativo: ").append(possuiAtivo)
                     .append("\n");
 
             if (qtdEmprestimos > maior) {
-                idAmigo = a.getIdAmigo();
+                idAmigo = Integer.parseInt(a[1]);
                 maior = qtdEmprestimos;
             }
         }
 
         sb.append("\n Amigo com maior quantidade de empréstimos: ")
-                .append(amigoService.getNomeAmigo(idAmigo))
+                .append(amigoService.obterNomePorId(idAmigo))
                 .append("\n Quantidade de empréstimos: ")
                 .append(maior)
                 .append("\n\n EMPRÉSTIMOS: \n");
+        
+        for (String[] e : listaEmprestimo) {
 
-        for (int i = 0; i < listaEmprestimo.size(); i++) {
-            Emprestimo e = listaEmprestimo.get(i);
-            logger.log(Level.INFO, "Processando empréstimo índice: {0}", i);
-
-            sb.append("\n ID do Empréstimo: ").append(e.getIDEmprestimo())
-                    .append("\n Nome do Amigo: ").append(amigoService.getNomeAmigo(e.getIDAmigo()))
-                    .append("\n Nome da Ferramenta: ").append(ferramentaService.getNomeFerramenta(e.getIDFerramenta()))
-                    .append("\n Data de Início: ").append(e.getDataEmprestimo())
-                    .append("\n Data de Devolução: ").append(e.getDataDevolucao())
+            sb.append("\n ID do Empréstimo: ").append(e[0])
+                    .append("\n Nome do Amigo: ").append(amigoService.obterNomePorId(Integer.parseInt(e[1])))
+                    .append("\n Nome da Ferramenta: ").append(ferramentaService.buscarNomePorId(Integer.parseInt(e[2])))
+                    .append("\n Data de Início: ").append(e[3])
+                    .append("\n Data de Devolução: ").append(e[4])
                     .append("\n");
         }
         jTARelatorio.setText(sb.toString());
@@ -153,7 +152,13 @@ public class FrmRelatorio extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new FrmRelatorio().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> {
+            try {
+                new FrmRelatorio().setVisible(true);
+            } catch (Exception ex) {
+                logger.log(Level.SEVERE, null, ex);
+            }
+        });
 
     }
 
