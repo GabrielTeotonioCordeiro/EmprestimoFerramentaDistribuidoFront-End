@@ -1,18 +1,26 @@
 package visao;
 
+import java.rmi.RemoteException;
 import javax.swing.JOptionPane;
-import service.FerramentaService;
+import servico.FerramentaService;
+import servico.IFerramenta;
 
 public class FrmCadastroFerramenta extends javax.swing.JFrame {
 
     /**
      * Creates new form FrmCadastroFerramenta
      */
-    private transient FerramentaService ferramentaService = new FerramentaService();
+    private transient IFerramenta ferramentaService;
     private String mensagem;
 
     public FrmCadastroFerramenta() {
         initComponents();
+
+        try {
+            this.ferramentaService = FerramentaService.getInstanciaFerramenta();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Erro ao conectar servidor RMI: " + e.getMessage());
+        }
     }
 
     public String getMensagem() {
@@ -152,11 +160,16 @@ public class FrmCadastroFerramenta extends javax.swing.JFrame {
                 custo = (Double.parseDouble(textCustoFerramenta.getText()));
 
             }
-            if (ferramentaService.insertFerramentaDB(nome, marca, custo)) {
-                mostrarMensagem("Ferramenta cadastrada com sucesso.");
-                textMarcaFerramenta.setText("");
-                textNomeFerramenta.setText("");
-                textCustoFerramenta.setText("");
+            try {
+                if (ferramentaService.insertFerramentaDB(nome, marca, custo)) {
+                    mostrarMensagem("Ferramenta cadastrada com sucesso.");
+                    textMarcaFerramenta.setText("");
+                    textNomeFerramenta.setText("");
+                    textCustoFerramenta.setText("");
+                }
+            } catch (RemoteException e) {
+                mostrarMensagem("Erro ao conectar com o serviço remoto: " + e.getMessage());
+                e.printStackTrace();
             }
         } catch (Erro erro) {
             JOptionPane.showMessageDialog(null, erro.getMessage());

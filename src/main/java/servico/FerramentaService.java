@@ -13,6 +13,6 @@ public class FerramentaService {
             Object obj = registro.lookup("FerramentaService");
             instanciaFerramenta = (IFerramenta) obj;
         }
-        return null;
+        return instanciaFerramenta;
     }
 }
