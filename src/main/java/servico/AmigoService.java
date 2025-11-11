@@ -7,8 +7,8 @@ public class AmigoService {
    
    public static IAmigo getInstanciaAmigo() throws Exception{
     if(instanciaAmigo == null){
-        Registry registro = LocateRegistry.getRegistry("localhost");
-        Object obj = registro.lookup("AmigoService");
+        Registry registroAmigo = LocateRegistry.getRegistry("localhost", 1098);
+        Object obj = registroAmigo.lookup("AmigoService");
         instanciaAmigo = (IAmigo) obj;
     }
     return instanciaAmigo;
