@@ -7,16 +7,18 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
-import service.EmprestimoService;
 import static servico.AmigoService.getInstanciaAmigo;
+import static servico.EmprestimoService.getInstanciaEmprestimo;
 import static servico.FerramentaService.getInstanciaFerramenta;
 import servico.IAmigo;
+import servico.IEmprestimo;
 import servico.IFerramenta;
 
 public class FrmCadastroEmprestimo extends javax.swing.JFrame {
 
     private transient IAmigo amigoService;
     private transient IFerramenta ferramentaService;
+    private transient IEmprestimo emprestimoService;
 
     private String mensagem;
 
@@ -25,6 +27,7 @@ public class FrmCadastroEmprestimo extends javax.swing.JFrame {
         try {
             this.amigoService = getInstanciaAmigo();
             this.ferramentaService = getInstanciaFerramenta();
+            this.emprestimoService = getInstanciaEmprestimo();
             this.carregaCBFerramenta();
             this.carregaCBAmigo();
         } catch (Exception e) {
@@ -135,8 +138,6 @@ public class FrmCadastroEmprestimo extends javax.swing.JFrame {
             String[] ferramenta = listaFerramenta.get(posicaoFerramenta);
             int idFerramenta = Integer.parseInt(ferramenta[0]);
 
-            EmprestimoService emprestimo = new EmprestimoService();
-
             if ("Não".equals(ferramentaService.getDisponivel(idFerramenta))) {
                 mostrarMensagem("Ferramenta já emprestada.");
                 throw new Erro("Ferramenta já emprestada.");
@@ -151,7 +152,7 @@ public class FrmCadastroEmprestimo extends javax.swing.JFrame {
             String[] inversaoData = dataInicio.split("-");
             dataInicio = inversaoData[2] + "-" + inversaoData[1] + "-" + inversaoData[0];
 
-            if (conf == 0 && emprestimo.insertEmprestimoDB(idAmigo, idFerramenta, dataInicio)) {
+            if (conf == 0 && emprestimoService.insertEmprestimoDB(idAmigo, idFerramenta, dataInicio)) {
                 mostrarMensagem("Empréstimo cadastrado com sucesso.");
                 ferramentaService.updateFerramentaDB(
                         idFerramenta,
