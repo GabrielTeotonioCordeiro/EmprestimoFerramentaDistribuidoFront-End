@@ -1,26 +1,35 @@
 package visao;
 
+import java.rmi.RemoteException;
 import javax.swing.JComboBox;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
-import modelo.Amigo;
-import modelo.Ferramenta;
-import service.AmigoService;
 import service.EmprestimoService;
-import service.FerramentaService;
+import static servico.AmigoService.getInstanciaAmigo;
+import static servico.FerramentaService.getInstanciaFerramenta;
+import servico.IAmigo;
+import servico.IFerramenta;
 
 public class FrmCadastroEmprestimo extends javax.swing.JFrame {
 
-    private transient AmigoService amigoService = new AmigoService();
-    private transient FerramentaService ferramentaService= new FerramentaService();
+    private transient IAmigo amigoService;
+    private transient IFerramenta ferramentaService;
 
     private String mensagem;
 
-    public FrmCadastroEmprestimo() {
+    public FrmCadastroEmprestimo() throws Exception {
         initComponents();
-        carregaCBFerramenta();
-        carregaCBAmigo();
+        try {
+            this.amigoService = getInstanciaAmigo();
+            this.ferramentaService = getInstanciaFerramenta();
+            this.carregaCBFerramenta();
+            this.carregaCBAmigo();
+        } catch (Exception e) {
+            mostrarMensagem("Erro ao conectar com o servidor: " + e.getMessage());
+        }
     }
 
     public String getMensagem() {
@@ -103,52 +112,73 @@ public class FrmCadastroEmprestimo extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jBCancelarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBCancelarActionPerformed
-        if (evt == null) return;
+        if (evt == null) {
+            return;
+        }
         this.dispose();
     }//GEN-LAST:event_jBCancelarActionPerformed
 
     private void jBCadastrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBCadastrarActionPerformed
-        if (evt == null) return;
+        if (evt == null) {
+            return;
+        }
         try {
             int conf = 0;
 
             int posicaoFerramenta = jCBFerramenta.getSelectedIndex();
             int posicaoAmigo = jCBAmigo.getSelectedIndex();
-            List<Ferramenta> listaFerramenta = ferramentaService.listaFerramenta();
-            List<Amigo> listaAmigo = amigoService.listaAmigo();
+
+            List<String[]> listaFerramenta = ferramentaService.listarTodas();
+            List<String[]> listaAmigo = amigoService.listarTodos();
+
+            String[] amigo = listaAmigo.get(posicaoAmigo);
+            String[] ferramenta = listaFerramenta.get(posicaoFerramenta);
+            int idFerramenta = Integer.parseInt(ferramenta[0]);
+
             EmprestimoService emprestimo = new EmprestimoService();
-            if ("Não".equals(ferramentaService.getDisponivel(listaFerramenta.get(posicaoFerramenta).getIdFerramenta()))) {
+
+            if ("Não".equals(ferramentaService.getDisponivel(idFerramenta))) {
                 mostrarMensagem("Ferramenta já emprestada.");
                 throw new Erro("Ferramenta já emprestada.");
             }
-            int idAmigo = listaAmigo.get(posicaoAmigo).getIdAmigo();
+
+            int idAmigo = Integer.parseInt(amigo[0]);
+
             if (amigoService.possuiEmprestimoAtivo(idAmigo)) {
                 conf = confirmarCadastrarAmigoComEmprestimo();
             }
-            int idFerramenta = listaFerramenta.get(posicaoFerramenta).getIdFerramenta();
             String dataInicio = LocalDate.now() + "";
             String[] inversaoData = dataInicio.split("-");
             dataInicio = inversaoData[2] + "-" + inversaoData[1] + "-" + inversaoData[0];
+
             if (conf == 0 && emprestimo.insertEmprestimoDB(idAmigo, idFerramenta, dataInicio)) {
                 mostrarMensagem("Empréstimo cadastrado com sucesso.");
-                ferramentaService.updateFerramentaDB(idFerramenta, listaFerramenta.get(posicaoFerramenta).getNomeFerramenta(), listaFerramenta.get(posicaoFerramenta).getMarcaFerramenta(), listaFerramenta.get(posicaoFerramenta).getCustoFerramenta());
+                ferramentaService.updateFerramentaDB(
+                        idFerramenta,
+                        ferramenta[1], 
+                        ferramenta[2], 
+                        Double.parseDouble(ferramenta[3])
+                );
             }
+
         } catch (Erro erro) {
             JOptionPane.showMessageDialog(null, erro.getMessage());
+        } catch (RemoteException ex) {
+            Logger.getLogger(FrmCadastroEmprestimo.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_jBCadastrarActionPerformed
-    public void carregaCBFerramenta() {
-        List<Ferramenta> listaFerramenta = ferramentaService.listaFerramenta();
-        for (Ferramenta objeto : listaFerramenta) {
-            jCBFerramenta.addItem(objeto.getIdFerramenta() + "- " + objeto.getNomeFerramenta());
+    public void carregaCBFerramenta() throws RemoteException {
+        List<String[]> listaFerramenta = ferramentaService.listarTodas();
+        for (String[] objeto : listaFerramenta) {
+            jCBFerramenta.addItem(objeto[0] + " - " + objeto[1]);
         }
 
     }
 
-    public void carregaCBAmigo() {
-        List<Amigo> listaAmigo = amigoService.listaAmigo();
-        for (Amigo objeto : listaAmigo) {
-            jCBAmigo.addItem(objeto.getIdAmigo() + "- " + objeto.getNomeAmigo());
+    public void carregaCBAmigo() throws RemoteException {
+        List<String[]> listaAmigo = amigoService.listarTodos();
+        for (String[] objeto : listaAmigo) {
+            jCBAmigo.addItem(objeto[0] + " - " + objeto[1]);
         }
 
     }
@@ -170,11 +200,17 @@ public class FrmCadastroEmprestimo extends javax.swing.JFrame {
             java.util.logging.Logger.getLogger(FrmCadastroEmprestimo.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
-        
+
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new FrmCadastroEmprestimo().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> {
+            try {
+                new FrmCadastroEmprestimo().setVisible(true);
+            } catch (Exception ex) {
+                Logger.getLogger(FrmCadastroEmprestimo.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
 
     }
 
