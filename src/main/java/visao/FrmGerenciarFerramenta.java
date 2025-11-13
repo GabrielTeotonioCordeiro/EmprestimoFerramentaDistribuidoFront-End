@@ -1,21 +1,30 @@
 package visao;
 
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.text.DecimalFormat;
 import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
-import modelo.Emprestimo;
-import modelo.Ferramenta;
-import service.EmprestimoService;
-import service.FerramentaService;
+import servico.EmprestimoService;
+import servico.IEmprestimo;
+import servico.IFerramenta;
 
 public class FrmGerenciarFerramenta extends javax.swing.JFrame {
 
-    private transient FerramentaService ferramentaService = new FerramentaService();
+    private transient IFerramenta ferramentaService;
     private String mensagem;
 
     public FrmGerenciarFerramenta() {
         initComponents();
+        try {
+            Registry registro = LocateRegistry.getRegistry("localhost", 1100);
+            ferramentaService = (IFerramenta) registro.lookup("FerramentaService");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Erro ao conectar ao servidor RMI: " + e.getMessage());
+            e.printStackTrace();
+        }
         this.carregaListaFerramenta();
     }
 
@@ -235,55 +244,92 @@ public class FrmGerenciarFerramenta extends javax.swing.JFrame {
                 jTFCustoFerramenta.setText("");
                 labelDisponivel.setText("");
                 this.carregaListaFerramenta();
+            } else {
+                mostrarMensagem("Falha ao atualizar Ferramenta");
             }
         } catch (Erro erro) {
             JOptionPane.showMessageDialog(null, erro.getMessage());
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Erro ao atualizar o servidor:\n" + e.getMessage(),
+                    "Erro de comunicação", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
         }
     }//GEN-LAST:event_jBModificarActionPerformed
 
     private void jBApagarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBApagarActionPerformed
         if (evt == null) return;
 
-        int conf = 0;
-        EmprestimoService emp = new EmprestimoService();
-        List<Emprestimo> listaEmprestimo = emp.listaEmprestimo();
-        conf = confirmarApagarFerramenta();
-        if (conf == 0) {
-
-            for (int i = 0; i < listaEmprestimo.size(); i++) {
-                if (listaEmprestimo.get(i).getIDFerramenta() == Integer.parseInt(jLIid.getText())) {
-                    emp.deleteEmprestimoDB(listaEmprestimo.get(i).getIDEmprestimo());
+        try {
+            if (jTableAmigos.getSelectedRow() == -1) {
+                JOptionPane.showMessageDialog(null, "Selecione uma Ferramenta para apagar.");
+                return;
+            }
+            
+            int conf = confirmarApagarFerramenta();
+            if (conf != 0) return;
+            
+            int idFerramenta = Integer.parseInt(jLIid.getText());
+            
+            IEmprestimo emp = EmprestimoService.getInstanciaEmprestimo();
+            
+            List<String[]> listaEmprestimo = emp.listaEmprestimo();
+            
+            for (String[] e : listaEmprestimo) {
+                int idEmprestimo = Integer.parseInt(e[0]);
+                int idFerramentaLista = Integer.parseInt(e[2]);
+                if (idFerramentaLista == idFerramenta) {
+                    emp.deleteEmprestimoDB(idEmprestimo);
                 }
             }
-            ferramentaService.deleteFerramentaDB(Integer.parseInt(jLIid.getText()));
-            jLIid.setVisible(false);
-            jTFMarca.setText("");
-            jTFNome.setText("");
-            jTFCustoFerramenta.setText("");
-            labelDisponivel.setText("");
-            this.carregaListaFerramenta();
-            mostrarMensagem("Ferramenta apagada com sucesso.");
+            
+            if (ferramentaService.deleteFerramentaDB(idFerramenta)) {
+                mostrarMensagem("Ferramenta deletada com sucesso.");
+                jLIid.setVisible(false);
+                jTFMarca.setText("");
+                jTFNome.setText("");
+                jTFCustoFerramenta.setText("");
+                labelDisponivel.setText("");
+                this.carregaListaFerramenta();
+            } else {
+                mostrarMensagem("Falha ao apagar a Ferramenta.");
+            }
+        } catch (RemoteException ex) {
+            JOptionPane.showMessageDialog(null, "Erro ao conectar com o servidor RMI:\n" + ex.getMessage(),
+                    "Erro de comunicação", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(null, "Erro inesperado ao apagar Ferramenta:\n" + ex.getMessage(),
+                    "Erro", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
         }
-
     }//GEN-LAST:event_jBApagarActionPerformed
+    
     public void carregaListaFerramenta() {
         DefaultTableModel model = (DefaultTableModel) jTableAmigos.getModel();
         jLIid.setVisible(false);
         double som = 0;
         DecimalFormat df = new DecimalFormat("0.00");
         model.setNumRows(0);
-        List<Ferramenta> listaFerramenta = ferramentaService.listaFerramenta();
-        for (Ferramenta objeto : listaFerramenta) {
-            model.addRow(new Object[]{
-                objeto.getIdFerramenta(),
-                objeto.getNomeFerramenta(),
-                objeto.getMarcaFerramenta(),
-                objeto.getCustoFerramenta(),
-                ferramentaService.getDisponivel(objeto.getIdFerramenta()),}
-            );
-            som += objeto.getCustoFerramenta();
-        }
-        jLCustoTotal.setText("Custo total: R$" + df.format(som));
+        
+        try {
+            List<String[]> listaFerramenta = ferramentaService.listarTodas();
+            for (String[] linha : listaFerramenta) {
+                int id = Integer.parseInt(linha[0]);
+                String nome = linha[1];
+                String marca = linha[2];
+                double custo = Double.parseDouble(linha[3]);
+                String disponivel = ferramentaService.getDisponivel(id);
+                
+                model.addRow(new Object[]{id, nome, marca, custo, disponivel});
+                som += custo;
+            }
+            jLCustoTotal.setText("Custo total: R$" + df.format(som));
+            
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Erro ao carregar lista de Ferramentas:\n" + e.getMessage(),
+                    "Erro", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        } 
     }
 
     /**

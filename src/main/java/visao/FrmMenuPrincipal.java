@@ -160,9 +160,15 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
 
     private void jMenuItemEmprestimoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemEmprestimoActionPerformed
         if (evt == null) return;
+        try {
         // Instancia a tela de cadastro de empréstimo
         FrmCadastroEmprestimo tela = new FrmCadastroEmprestimo();
         tela.setVisible(true);
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Erro ao abrir tela de Empréstimo: " + e.getMessage(),
+                    "Erro", javax.swing.JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
     }//GEN-LAST:event_jMenuItemEmprestimoActionPerformed
 
     private void jMenuItemDevolucaoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemDevolucaoActionPerformed
@@ -181,17 +187,28 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
 
     private void jMenuItemRelatorioActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemRelatorioActionPerformed
         if (evt == null) return;
+        try {
         //Instancia a tela de relatorio
         FrmRelatorio objeto = new FrmRelatorio();
         objeto.setVisible(true);
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Erro ao abrir tela de Relatório: " + e.getMessage(),
+                    "Erro", javax.swing.JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
     }//GEN-LAST:event_jMenuItemRelatorioActionPerformed
 
     private void jMenuItemCadastrarAmigosActionPerformed(java.awt.event.ActionEvent evt) {
         if (evt == null) return;
+        try {
         //Instancia a tela de cadastrar amigo
         FrmCadastroAmigo objeto = new FrmCadastroAmigo();
         objeto.setVisible(true);
-
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Erro ao abrir tela de Cadastro Amigo: " + e.getMessage(),
+                    "Erro", javax.swing.JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
     }
 
     private void jMenuItemGerenciarFerramentasActionPerformed(java.awt.event.ActionEvent evt) {
