@@ -1,8 +1,12 @@
 package visao;
 
 import java.rmi.RemoteException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import javax.swing.JComboBox;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -138,7 +142,8 @@ public class FrmCadastroEmprestimo extends javax.swing.JFrame {
             String[] ferramenta = listaFerramenta.get(posicaoFerramenta);
             int idFerramenta = Integer.parseInt(ferramenta[0]);
 
-            if ("Não".equals(ferramentaService.getDisponivel(idFerramenta))) {
+
+            if ("Não".equals((ferramentaService.getDisponivel(idFerramenta)))) {
                 mostrarMensagem("Ferramenta já emprestada.");
                 throw new Erro("Ferramenta já emprestada.");
             }
@@ -156,8 +161,8 @@ public class FrmCadastroEmprestimo extends javax.swing.JFrame {
                 mostrarMensagem("Empréstimo cadastrado com sucesso.");
                 ferramentaService.updateFerramentaDB(
                         idFerramenta,
-                        ferramenta[1], 
-                        ferramenta[2], 
+                        ferramenta[1],
+                        ferramenta[2],
                         Double.parseDouble(ferramenta[3])
                 );
             }

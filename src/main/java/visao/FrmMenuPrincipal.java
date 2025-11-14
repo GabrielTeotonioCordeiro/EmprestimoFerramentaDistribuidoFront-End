@@ -1,5 +1,8 @@
 package visao;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public class FrmMenuPrincipal extends javax.swing.JFrame {
     
     /**
@@ -147,7 +150,12 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
     private void jMenuItemGerenciarAmigosActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemGerenciarAmigosActionPerformed
         if (evt == null) return;
         //Instancia a tela de gerenciar amigo
-        FrmGerenciarAmigo objeto = new FrmGerenciarAmigo();
+        FrmGerenciarAmigo objeto = null;
+        try {
+            objeto = new FrmGerenciarAmigo();
+        } catch (Exception ex) {
+            Logger.getLogger(FrmMenuPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+        }
         objeto.setVisible(true);
     }//GEN-LAST:event_jMenuItemGerenciarAmigosActionPerformed
 
@@ -181,7 +189,12 @@ public class FrmMenuPrincipal extends javax.swing.JFrame {
     private void jMenuItemGerenciarEmprestimoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemGerenciarEmprestimoActionPerformed
         if (evt == null) return;
         //Instancia a tela de gerenciar emprestimo
-        FrmGerenciarEmprestimo objeto = new FrmGerenciarEmprestimo();
+        FrmGerenciarEmprestimo objeto = null;
+        try {
+            objeto = new FrmGerenciarEmprestimo();
+        } catch (Exception ex) {
+            Logger.getLogger(FrmMenuPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+        }
         objeto.setVisible(true);
     }//GEN-LAST:event_jMenuItemGerenciarEmprestimoActionPerformed
 

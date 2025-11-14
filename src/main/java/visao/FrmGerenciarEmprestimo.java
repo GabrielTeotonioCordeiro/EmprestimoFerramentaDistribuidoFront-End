@@ -1,21 +1,26 @@
 package visao;
 
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
-import modelo.Emprestimo;
-import service.EmprestimoService;
+import servico.IEmprestimo;
+import static servico.EmprestimoService.getInstanciaEmprestimo;
 
 public class FrmGerenciarEmprestimo extends javax.swing.JFrame {
 
-    private transient EmprestimoService emprestimoService;
+    private transient IEmprestimo emprestimoService;
     
 
     private String mensagem;
 
-    public FrmGerenciarEmprestimo() {
+    public FrmGerenciarEmprestimo() throws Exception {
         initComponents();
-        this.emprestimoService = new EmprestimoService();
+        emprestimoService = getInstanciaEmprestimo();     
         this.carregaListaEmprestimo();
     }
 
@@ -186,22 +191,26 @@ public class FrmGerenciarEmprestimo extends javax.swing.JFrame {
     }//GEN-LAST:event_jBCancelarActionPerformed
 
     private void buttonModificarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonModificarActionPerformed
-        if (evt == null) return;
-
-        String dataDevolucao = null;
-        int id = Integer.parseInt(tableEmprestimo.getValueAt(this.tableEmprestimo.getSelectedRow(), 0).toString());
-        int idAmigo = Integer.parseInt(textIdAmigo.getText());
-        int idFerramenta = Integer.parseInt(textIdFerramenta.getText());
-        String dataEmprestimo = textDataEmprestimo.getText();
-        dataDevolucao = textDataDevolucao.getText();
-        if (emprestimoService.updateEmprestimoDB(id, idAmigo, idFerramenta, dataEmprestimo, dataDevolucao)) {
-            mostrarMensagem("Empréstimo atualizado com sucesso.");
-            labelIid.setVisible(false);
-            textIdAmigo.setText("");
-            textIdFerramenta.setText("");
-            textDataEmprestimo.setText("");
-            textDataDevolucao.setText("");
-            this.carregaListaEmprestimo();
+        try {
+            if (evt == null) return;
+            
+            String dataDevolucao = null;
+            int id = Integer.parseInt(tableEmprestimo.getValueAt(this.tableEmprestimo.getSelectedRow(), 0).toString());
+            int idAmigo = Integer.parseInt(textIdAmigo.getText());
+            int idFerramenta = Integer.parseInt(textIdFerramenta.getText());
+            String dataEmprestimo = textDataEmprestimo.getText();
+            dataDevolucao = textDataDevolucao.getText();
+            if (emprestimoService.updateEmprestimoDB(id, idAmigo, idFerramenta, dataEmprestimo, dataDevolucao)) {
+                mostrarMensagem("Empréstimo atualizado com sucesso.");
+                labelIid.setVisible(false);
+                textIdAmigo.setText("");
+                textIdFerramenta.setText("");
+                textDataEmprestimo.setText("");
+                textDataDevolucao.setText("");
+                this.carregaListaEmprestimo();  
+            }
+        } catch (RemoteException ex) {
+            Logger.getLogger(FrmGerenciarEmprestimo.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_buttonModificarActionPerformed
 
@@ -224,31 +233,26 @@ public class FrmGerenciarEmprestimo extends javax.swing.JFrame {
     private void buttonApagarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonApagarActionPerformed
         if (evt == null) return;
 
-        emprestimoService.deleteEmprestimoDB(Integer.parseInt(labelIid.getText()));
-        labelIid.setVisible(false);
-        textIdAmigo.setText("");
-        textIdFerramenta.setText("");
-        textDataEmprestimo.setText("");
-        textDataDevolucao.setText("");
-        this.carregaListaEmprestimo();
-        mostrarMensagem("Emprestimo apagado com sucesso.");
+        
     }//GEN-LAST:event_buttonApagarActionPerformed
-    public void carregaListaEmprestimo() {
+    public void carregaListaEmprestimo() throws RemoteException {
         DefaultTableModel model = (DefaultTableModel) tableEmprestimo.getModel();
         model.setRowCount(0);
         labelIid.setVisible(false);
-        List<Emprestimo> listaEmprestimo = emprestimoService.listaEmprestimo();
+        
+        List<String[]> listaEmprestimo = emprestimoService.listaEmprestimo();
         for (int i = 0; i < listaEmprestimo.size(); i++) {
             model.addRow(new Object[]{
-                listaEmprestimo.get(i).getIDEmprestimo(),
-                listaEmprestimo.get(i).getIDAmigo(),
-                listaEmprestimo.get(i).getIDFerramenta(),
-                listaEmprestimo.get(i).getDataEmprestimo(),
-                listaEmprestimo.get(i).getDataDevolucao(),
-                emprestimoService.emprestimoAtivo(listaEmprestimo.get(i).getIDEmprestimo()),
+                listaEmprestimo.get(i)[0],
+                listaEmprestimo.get(i)[1],
+                listaEmprestimo.get(i)[2],
+                listaEmprestimo.get(i)[3],
+                listaEmprestimo.get(i)[4],
+                emprestimoService.emprestimoAtivo(Integer.parseInt(listaEmprestimo.get(i)[0])),
             }
             );
         }
+        
     }
 
     /**
@@ -275,7 +279,13 @@ public class FrmGerenciarEmprestimo extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new FrmGerenciarEmprestimo().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> {
+            try {
+                new FrmGerenciarEmprestimo().setVisible(true);
+            } catch (Exception ex) {
+                Logger.getLogger(FrmGerenciarEmprestimo.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
 
     }
 

@@ -1,25 +1,28 @@
 package visao;
 
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
-import modelo.Amigo;
-import modelo.Emprestimo;
-import javax.swing.*;
-import service.AmigoService;
-import service.EmprestimoService;
+import static servico.AmigoService.getInstanciaAmigo;
+import servico.IAmigo;
 
 public class FrmGerenciarAmigo extends javax.swing.JFrame {
 
-    private transient AmigoService amigoService = new AmigoService();
+    private transient IAmigo amigoService;
 
     private String mensagem;
 
-    public FrmGerenciarAmigo() {
-        initComponents();
+    public FrmGerenciarAmigo() throws Exception {
+        initComponents();          
+            amigoService = getInstanciaAmigo();
+
         this.carregaListaAmigo();
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        setVisible(true);
+        
     }
 
     public String getMensagem() {
@@ -162,34 +165,24 @@ public class FrmGerenciarAmigo extends javax.swing.JFrame {
         if (evt == null) {
             return;
         }
-
         try {
-            int id = Integer.parseInt(jTableAmigos.getValueAt(this.jTableAmigos.getSelectedRow(), 0).toString());
-            String nome = "";
-            String telefone = "";
-            if (textNome.getText().length() < 3) {
-                throw new Erro("Nome deve conter pelo menos 3 caracteres, tente novamente.");
-            } else {
-                nome = (textNome.getText());
+            
+            int id = Integer.parseInt(labelIid.getText());
+            String nome = textNome.getText().trim();
+            String telefone = textTelefone.getText();
 
-            }
-            if (textTelefone.getText().length() < 8) {
-                throw new Erro("Telefone deve conter pelo menos 8 caracteres, tente novamente.");
-            } else {
-                telefone = (textTelefone.getText());
-
-            }
-
-            if (amigoService.updateAmigoDB(id, nome, telefone)) {
+            if (amigoService.updateAmigoDB(id, nome,telefone)) {
                 mostrarMensagem("Amigo atualizado com sucesso.");
-                labelIid.setVisible(false);
-                textNome.setText("");
-                textTelefone.setText("");
-                this.carregaListaAmigo();
+                carregaListaAmigo();
+            } else {
+                mostrarMensagem("Falha ao atualizar o amigo.");
             }
-        } catch (Erro erro) {
-            JOptionPane.showMessageDialog(null, erro.getMessage());
+        } catch (RemoteException ex) {
+            ex.printStackTrace();
+            mostrarMensagem("Erro ao conectar ao servidor RMI: " + ex.getMessage());
         }
+
+        
     }//GEN-LAST:event_buttonModificarActionPerformed
 
     private void jTableAmigosMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTableAmigosMouseClicked
@@ -209,39 +202,50 @@ public class FrmGerenciarAmigo extends javax.swing.JFrame {
         if (evt == null) {
             return;
         }
-
-        int conf = 0;
-        EmprestimoService emp = new EmprestimoService();
-        List<Emprestimo> listaEmprestimo = emp.listaEmprestimo();
-        conf = confirmarApagarAmigo();
-        if (conf == 0) {
-
-            for (int i = 0; i < listaEmprestimo.size(); i++) {
-                if (listaEmprestimo.get(i).getIDAmigo() == Integer.parseInt(labelIid.getText())) {
-                    emp.deleteEmprestimoDB(listaEmprestimo.get(i).getIDEmprestimo());
-                }
+        try {
+            if (jTableAmigos.getSelectedRow() == -1) {
+                mostrarMensagem("Selecione um Amigo para apagar.");
+                return;
             }
-            amigoService.deleteAmigoDB(Integer.parseInt(labelIid.getText()));
-            labelIid.setVisible(false);
-            textNome.setText("");
-            textTelefone.setText("");
-            this.carregaListaAmigo();
-            mostrarMensagem("Amigo apagado com sucesso.");
+
+            int conf = JOptionPane.showConfirmDialog(null,
+                    "Deseja realmente apagar este Amigo?",
+                    "Confirmação",
+                    JOptionPane.YES_NO_OPTION);
+
+            if (conf != JOptionPane.YES_OPTION) return;
+
+            int id = Integer.parseInt(labelIid.getText());
+
+            if (amigoService.deleteAmigoDB(id)) {
+                mostrarMensagem("Amigo apagado com sucesso.");
+                textNome.setText("");
+                labelIid.setText("");
+                textTelefone.setText("");
+                carregaListaAmigo();
+            } else {
+                mostrarMensagem("Falha ao apagar o amigo.");
+            }
+
+        } catch (RemoteException ex) {
+            ex.printStackTrace();
+            mostrarMensagem("Erro ao conectar ao servidor RMI: " + ex.getMessage());
         }
 
     }//GEN-LAST:event_buttonApagarActionPerformed
     public void carregaListaAmigo() {
+        try{
         DefaultTableModel model = (DefaultTableModel) jTableAmigos.getModel();
         labelIid.setVisible(false);
         model.setNumRows(0);
-        List<Amigo> listaAmigo = amigoService.listaAmigo();
-        for (Amigo objeto : listaAmigo) {
-            model.addRow(new Object[]{
-                objeto.getIdAmigo(),
-                objeto.getNomeAmigo(),
-                objeto.getTelefone(),}
+        List<String[]> listaAmigo = amigoService.listarTodos();
+        for (String[] amigo: listaAmigo) {
+            model.addRow(new Object[]{amigo[0],amigo[1],amigo[2]}
             );
         }
+    }catch(RemoteException e){
+        
+    }
     }
 
     /**
@@ -274,7 +278,13 @@ public class FrmGerenciarAmigo extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new FrmGerenciarAmigo().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> {
+            try {
+                new FrmGerenciarAmigo().setVisible(true);
+            } catch (Exception ex) {
+                Logger.getLogger(FrmGerenciarAmigo.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
 
     }
 

@@ -12,13 +12,12 @@ import servico.IFerramenta;
 
 public class FrmRelatorio extends javax.swing.JFrame {
 
+    private static final Logger logger = Logger.getLogger(FrmRelatorio.class.getName());
+
     public FrmRelatorio() throws Exception {
         initComponents();
         this.criaRelatorio();
-        ferramentaService = getInstanciaFerramenta();
     }
-    private static final Logger logger = Logger.getLogger(FrmRelatorio.class.getName());
-    private transient IFerramenta ferramentaService;
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -78,6 +77,7 @@ public class FrmRelatorio extends javax.swing.JFrame {
         int maior = 0;
         StringBuilder sb = new StringBuilder();
         double som = 0;
+        IFerramenta ferramentaService = getInstanciaFerramenta();
         IAmigo amigoService = getInstanciaAmigo();
         IEmprestimo emp = getInstanciaEmprestimo();
         List<String[]> listaAmigo = amigoService.listarTodos();
@@ -107,7 +107,7 @@ public class FrmRelatorio extends javax.swing.JFrame {
                     .append("\n");
 
             if (qtdEmprestimos > maior) {
-                idAmigo = Integer.parseInt(a[1]);
+                idAmigo = Integer.parseInt(a[0]);
                 maior = qtdEmprestimos;
             }
         }
@@ -117,7 +117,7 @@ public class FrmRelatorio extends javax.swing.JFrame {
                 .append("\n Quantidade de empréstimos: ")
                 .append(maior)
                 .append("\n\n EMPRÉSTIMOS: \n");
-        
+
         for (String[] e : listaEmprestimo) {
 
             sb.append("\n ID do Empréstimo: ").append(e[0])
