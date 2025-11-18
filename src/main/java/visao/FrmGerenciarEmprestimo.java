@@ -14,13 +14,12 @@ import static servico.EmprestimoService.getInstanciaEmprestimo;
 public class FrmGerenciarEmprestimo extends javax.swing.JFrame {
 
     private transient IEmprestimo emprestimoService;
-    
 
     private String mensagem;
 
     public FrmGerenciarEmprestimo() throws Exception {
         initComponents();
-        emprestimoService = getInstanciaEmprestimo();     
+        emprestimoService = getInstanciaEmprestimo();
         this.carregaListaEmprestimo();
     }
 
@@ -184,16 +183,20 @@ public class FrmGerenciarEmprestimo extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jBCancelarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jBCancelarActionPerformed
-    //Libera todos os recurso da interface gráfica
-        if (evt == null) return;
+        //Libera todos os recurso da interface gráfica
+        if (evt == null) {
+            return;
+        }
 
         this.dispose();
     }//GEN-LAST:event_jBCancelarActionPerformed
 
     private void buttonModificarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonModificarActionPerformed
         try {
-            if (evt == null) return;
-            
+            if (evt == null) {
+                return;
+            }
+
             String dataDevolucao = null;
             int id = Integer.parseInt(tableEmprestimo.getValueAt(this.tableEmprestimo.getSelectedRow(), 0).toString());
             int idAmigo = Integer.parseInt(textIdAmigo.getText());
@@ -207,7 +210,7 @@ public class FrmGerenciarEmprestimo extends javax.swing.JFrame {
                 textIdFerramenta.setText("");
                 textDataEmprestimo.setText("");
                 textDataDevolucao.setText("");
-                this.carregaListaEmprestimo();  
+                this.carregaListaEmprestimo();
             }
         } catch (RemoteException ex) {
             Logger.getLogger(FrmGerenciarEmprestimo.class.getName()).log(Level.SEVERE, null, ex);
@@ -215,7 +218,9 @@ public class FrmGerenciarEmprestimo extends javax.swing.JFrame {
     }//GEN-LAST:event_buttonModificarActionPerformed
 
     private void tableEmprestimoMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tableEmprestimoMouseClicked
-        if (evt == null) return;
+        if (evt == null) {
+            return;
+        }
 
         if (this.tableEmprestimo.getSelectedRow() != -1) {
             labelIid.setText(tableEmprestimo.getValueAt(this.tableEmprestimo.getSelectedRow(), 0).toString());
@@ -231,15 +236,28 @@ public class FrmGerenciarEmprestimo extends javax.swing.JFrame {
     }//GEN-LAST:event_tableEmprestimoMouseClicked
 
     private void buttonApagarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonApagarActionPerformed
-        if (evt == null) return;
+        try {
+            if (evt == null) {
+                return;
+            }
+            emprestimoService.deleteEmprestimoDB(Integer.parseInt(labelIid.getText()));
+            labelIid.setVisible(false);
+            textIdAmigo.setText("");
+            textIdFerramenta.setText("");
+            textDataEmprestimo.setText("");
+            textDataDevolucao.setText("");
+            this.carregaListaEmprestimo();
+            mostrarMensagem("Emprestimo apagado com sucesso.");
+        } catch (RemoteException ex) {
+            Logger.getLogger(FrmGerenciarEmprestimo.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
-        
     }//GEN-LAST:event_buttonApagarActionPerformed
     public void carregaListaEmprestimo() throws RemoteException {
         DefaultTableModel model = (DefaultTableModel) tableEmprestimo.getModel();
         model.setRowCount(0);
         labelIid.setVisible(false);
-        
+
         List<String[]> listaEmprestimo = emprestimoService.listaEmprestimo();
         for (int i = 0; i < listaEmprestimo.size(); i++) {
             model.addRow(new Object[]{
@@ -248,11 +266,10 @@ public class FrmGerenciarEmprestimo extends javax.swing.JFrame {
                 listaEmprestimo.get(i)[2],
                 listaEmprestimo.get(i)[3],
                 listaEmprestimo.get(i)[4],
-                emprestimoService.emprestimoAtivo(Integer.parseInt(listaEmprestimo.get(i)[0])),
-            }
+                emprestimoService.emprestimoAtivo(Integer.parseInt(listaEmprestimo.get(i)[0])),}
             );
         }
-        
+
     }
 
     /**
@@ -275,7 +292,7 @@ public class FrmGerenciarEmprestimo extends javax.swing.JFrame {
             java.util.logging.Logger.getLogger(FrmGerenciarEmprestimo.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
-        
+
         //</editor-fold>
 
         /* Create and display the form */
