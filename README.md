@@ -14,8 +14,6 @@ O projeto utiliza Java 8. \
 O projeto foi desenvolivido no NetBeans 21. \
 O projeto usa o SQLite para gerenciar os dados. \
 Utiliza o Apache Maven para a automação de compilação. \
-Utiliza GitHub Actions para automatização de testes. \
-Utiliza SonarQube para controle de qualidade.
 
 ## Principais funcionalidades:
 CRUD de amigos: adicionar, ler, atualizar e excluir amigos do BD. \
