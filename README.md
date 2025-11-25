@@ -1,7 +1,7 @@
 # Sistema de Gerenciamento de Ferramentas 
 # Distribuido Front End
 ## Sobre o projeto:
-Esse projeto tem como objetivo utilizar de tecnologias de CI (Continous Integration) para poder melhorar e testar um codigo legado com funcao de gerenciar os empréstimos de ferramentas que o usuário faria para seus amigos.
+Esse projeto tem como objetivo utilizar de tecnologias de sistemas distribuidos para permitir que o programa utilize de servidores para aumentar a escalabilidade do projeto.
 
 ## Integrantes do trabalho:
 GarraOne: Gabriel Teotônio Cordeiro 10724111027 \
